@@ -24,7 +24,25 @@ namespace Poc1
 
         public override string ToString()
         {
-            return base.ToString();
+            var s = "========OBJECT========\n\n";
+            s += "id: " + this.id + "\n";
+            s += "FirstName: " + this.FirstName + "\n";
+            s += "MiddleInitial: " + this.MiddleInitial + "\n";
+            s += "LastName: " + this.LastName + "\n";
+            s += "SubscriberID: " + this.SubscriberID + "\n";
+            s += "DepdentCode: " + this.DepdentCode + "\n";
+            s += "GroupID: " + this.GroupID + "\n";
+            s += "Gender: " + this.Gender + "\n";
+            s += "DoB: " + this.DOB + "\n";
+            s += "Address 1: " + this.AddressLine1 + "\n";
+            s += "Address 2: " + this.AddressLine2 + "\n";
+            s += "City: " + this.City + "\n";
+            s += "State: " + this.State + "\n";
+            s += "Postal: " + this.PostalCode + "\n";
+            s += "HomePhone: " + this.HomePhone + "\n";
+            s += "CellPhone: " + this.CellPhone + "\n";
+            s += "Email: " + this.Email + "\n";
+            return s;
         }
     }
 }

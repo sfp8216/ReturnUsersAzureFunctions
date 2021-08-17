@@ -7,6 +7,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Poc1;
 
 namespace My.Functions
 {
@@ -15,21 +16,28 @@ namespace My.Functions
         [FunctionName("CreateUser")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
+               [CosmosDB(
+                databaseName: "UsersDB",
+                collectionName: "UsersContainer",
+                ConnectionStringSetting = "myCosmosDb")] IAsyncCollector<dynamic> userStore,
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            var content = await new StreamReader(req.Body).ReadToEndAsync();
+            var userObject = JsonConvert.DeserializeObject<Users>(content);
+            userObject.id = System.Guid.NewGuid().ToString();
+            log.LogInformation(userObject.ToString());
 
-            string name = req.Query["name"];
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            if (userObject.FirstName.Equals(null) || userObject.LastName.Equals(null) || userObject.SubscriberID.Equals(null))
+            {
+                return new BadRequestResult();
+            }
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+            await userStore.AddAsync(userObject);
 
-            return new OkObjectResult(responseMessage);
+            var response = $"Added {userObject.FirstName} {userObject.LastName} id: {userObject.id}";
+
+            return new OkObjectResult(response);
         }
     }
 }
