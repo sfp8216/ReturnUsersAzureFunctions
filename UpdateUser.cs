@@ -7,6 +7,10 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Documents;
+using Poc1;
+using System.Linq;
 
 namespace My.Functions
 {
@@ -14,22 +18,31 @@ namespace My.Functions
     {
         [FunctionName("UpdateUser")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
+                 [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = null)] HttpRequest req,
+               [CosmosDB(
+                databaseName: "UsersDB",
+                collectionName: "UsersContainer",
+                ConnectionStringSetting = "myCosmosDb")] DocumentClient client,
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            var content = await new StreamReader(req.Body).ReadToEndAsync();
+            var userObject = JsonConvert.DeserializeObject<Users>(content);
+            var id = userObject.id;
 
-            string name = req.Query["name"];
+            Document selectDoc = client.CreateDocumentQuery<Document>(UriFactory.CreateDocumentCollectionUri("UsersDB", "UsersContainer"))
+               .Where(user => user.Id == id)
+               .AsEnumerable()
+               .SingleOrDefault();
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            Document doc = await client.ReplaceDocumentAsync(selectDoc.SelfLink, userObject);
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
 
-            return new OkObjectResult(responseMessage);
+            if (doc == null)
+            {
+                return new NotFoundObjectResult("{\"status\":\"not found\"}");
+            }
+
+            return new OkObjectResult(doc);
         }
     }
 }

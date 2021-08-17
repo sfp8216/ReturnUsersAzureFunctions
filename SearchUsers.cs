@@ -20,7 +20,7 @@ namespace My.Functions
     {
         [FunctionName("SearchUsers")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
                [CosmosDB(
                 databaseName: "UsersDB",
                 collectionName: "UsersContainer",
@@ -37,7 +37,7 @@ namespace My.Functions
             {
                 QueryText = "SELECT * FROM UsersDB f WHERE f.FirstName LIKE @id OR f.LastName LIKE @id OR f.SubscriberID like @id OR f.GroupID LIKE @id",
                 Parameters = new SqlParameterCollection(){
-                    new SqlParameter("@id",searchTerm)
+                    new SqlParameter("@id","%"+ searchTerm +"%")
                 }
             }, options).AsDocumentQuery();
 
@@ -51,7 +51,7 @@ namespace My.Functions
             }
             if (results is null || results.Count < 1)
             {
-                return new NotFoundResult();
+                return new NotFoundObjectResult("{\"status\":\"not found\"}");
             }
             return new OkObjectResult(results);
         }

@@ -16,7 +16,7 @@ namespace My.Functions
     {
         [FunctionName("SelectUser")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
                [CosmosDB(
                 databaseName: "UsersDB",
                 collectionName: "UsersContainer",
@@ -29,7 +29,7 @@ namespace My.Functions
             var id = req.Query["id"];
             if (users is null)
             {
-                return new NotFoundResult();
+                return new NotFoundObjectResult("{\"status\":\"not found\"}");
             }
             return new OkObjectResult(users);
         }
